@@ -374,4 +374,54 @@
       <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/index/location"/>
     </content>
   </filter>
+   
+  <filter name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job">
+    <content type="application/x-http-headers">
+      <apply path="Location" rule="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location"/>
+    </content>
+  </filter>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/proxy" pattern="*://*:*/proxy/{**}">
+    <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}"/>
+  </rule>
+
+
+  <rule flow="OR" dir="OUT" name="YARNUIV2/yarnuiv2/outbound/headers/jobhistory/job/location">
+    <match pattern="{scheme}://{host}:{port}/jobhistory/job/{**}">
+      <rewrite template="{$frontend[url]}/jobhistory/job/{**}?{scheme}?{host}?{port}"/>
+    </match>
+    <match pattern="{scheme}://{host}:{port}/jobhistory/logs/{**}?{**}">
+      <rewrite template="{$frontend[url]}/jobhistory/logs/{**}?{**}"/>
+    </match>        
+    <match pattern="*://*:*/history/{**}?{**}">
+      <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
+    </match>
+    <match pattern="*://*:*/cluster/app/{**}">
+      <rewrite template="{$frontend[url]}/yarnuiv2/cluster/app/{**}"/>
+    </match>
+    <match pattern="*://*:*/cluster/apps/{**}">
+      <rewrite template="{$frontend[url]}/yarnuiv2/cluster/apps/{**}"/>
+    </match>
+  </rule>
+  
+  <!-- Yarn application containerlog outbound routing -->
+  <!--
+         This is the reference to the log button on application page
+   Rule changes
+   href='//${yarn.nodemanager}:{yarn.nodemanager.port}/node/containerlogs/container_xxx/user' into'
+   https://knox_host:knox_port/gateway/default/yarn/nodemanager/node/containerlogs/container_XXX/user?host=${yarn.nodemanager.host}&port=${yarn.nodemanager.port}
+
+   This is match by inbound "YARNUIV2/yarnuiv2/inbound/jobhistory/logs" rewrite which is a client content rewrite
+   by adding META refresh. So we need to rewrite META refresh to jobstory.
+  -->
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/node/containerlogs">
+    <match pattern="{scheme}://{host}:{port}/node/containerlogs/{**}"/>
+      <rewrite template="{$frontend[url]}/yarnuiv2/nodemanager/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+  </rule>
+
+  <rule dir="OUT" name="YARNUIV2/yarnuiv2/outbound/apps/history1">
+      <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}?{**}"/>
+  </rule>  
+  
+   
  </rules>
